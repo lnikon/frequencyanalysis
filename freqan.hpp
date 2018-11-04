@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cctype>
+#include <utility>
 
 class FrequencyAnalizer final
 {
@@ -19,7 +20,21 @@ class FrequencyAnalizer final
         FrequencyAnalizer& operator=(FrequencyAnalizer&&) = default;
 
         FrequencyAnalizer(const std::string& chipertext)
-            : m_chipertext(chipertext) {}
+            : m_chipertext(chipertext) 
+        {
+            std::vector<std::pair<char, double>> vec;
+
+            std::copy(std::begin(FREQ_MAP), std::end(FREQ_MAP), 
+                    std::back_inserter<decltype(vec)>(vec));
+
+            std::sort(std::begin(vec), std::end(vec), [](auto& left, auto& right) {
+                    return left.second > right.second; });
+
+            for(const auto& [word, freq] : vec)
+            {
+                std::cout << "{ " << word << " : " << freq << " }\n";
+            }
+        }
 
         auto getChipertext() { return m_chipertext; }
         void setChipertext(const std::string& chipertext) { m_chipertext = chipertext; }
@@ -30,14 +45,16 @@ class FrequencyAnalizer final
         void frequencyAnalysis()
         {
             auto chipertextFreqMap = generate_freq_map();
+            printFreqMap(chipertextFreqMap);
+            printFreqMap();
         }
 
         void printFreqMap() const
         {
             std::cout << '\n';
-            for(const auto cit : FREQ_MAP)
+            for(const auto& item : FREQ_MAP)
             {
-                std::cout << "{ " << cit.first << " : " << cit.second << "}\n";
+                std::cout << "{ " << item.first << " : " << item.second << "}\n";
             }
             std::cout << '\n';
         }
@@ -45,7 +62,7 @@ class FrequencyAnalizer final
         void printFreqMap(std::map<char, double> freq_map) const
         {
             std::cout << '\n';
-            for(const auto cit : freq_map)
+            for(const auto& cit : freq_map)
             {
                 std::cout << "{ " << cit.first << " : " << cit.second << "}\n";
             }
@@ -66,7 +83,7 @@ class FrequencyAnalizer final
             {
                 if(isalpha(ch))
                 {
-                    freq_map[ch]++;    
+                    freq_map[std::toupper(ch)]++;    
                     chipertextLen++;
                 }
             }
@@ -77,12 +94,12 @@ class FrequencyAnalizer final
                 return decltype(freq_map)();
             }
 
-            for(auto it: freq_map)
+            for(auto& [letter, count] : freq_map)
             {
-                it.second = it.second / chipertextLen;
+                count = count / static_cast<double>(chipertextLen);
             }
 
-            printFreqMap(freq_map);
+            return freq_map;
         }
 };
 
