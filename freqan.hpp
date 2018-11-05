@@ -22,18 +22,7 @@ class FrequencyAnalizer final
         FrequencyAnalizer(const std::string& chipertext)
             : m_chipertext(chipertext) 
         {
-            std::vector<std::pair<char, double>> vec;
-
-            std::copy(std::begin(FREQ_MAP), std::end(FREQ_MAP), 
-                    std::back_inserter<decltype(vec)>(vec));
-
-            std::sort(std::begin(vec), std::end(vec), [](auto& left, auto& right) {
-                    return left.second > right.second; });
-
-            for(const auto& [word, freq] : vec)
-            {
-                std::cout << "{ " << word << " : " << freq << " }\n";
-            }
+            m_freq_vec = convert_map_to_vector(FREQ_MAP);
         }
 
         auto getChipertext() { return m_chipertext; }
@@ -45,8 +34,23 @@ class FrequencyAnalizer final
         void frequencyAnalysis()
         {
             auto chipertextFreqMap = generate_freq_map();
-            printFreqMap(chipertextFreqMap);
-            printFreqMap();
+            auto chipertextFreqVec = convert_map_to_vector(chipertextFreqMap);            
+
+            std::string plain;
+            plain.resize(m_chipertext.size());
+
+            for(std::size_t i = 0; i < plain.size(); i++)
+            {
+                auto it = std::find_if(std::begin(m_freq_vec), std::end(m_freq_vec), [&](const auto& letterFreq) {
+                        return letterFreq.first == chipertextFreqVec[i].first;
+                        });
+                if(it != std::end(m_freq_vec))
+                {
+                    plain[i] = it->first;
+                }
+            }
+
+            std::cout << "PLAIN: " << plain << '\n';
         }
 
         void printFreqMap() const
@@ -71,6 +75,7 @@ class FrequencyAnalizer final
 
     private:
         static const std::map<char, double> FREQ_MAP; 
+        std::vector<std::pair<char, double>> m_freq_vec;
         std::string m_chipertext;
         std::string m_plaintext;
 
@@ -100,6 +105,18 @@ class FrequencyAnalizer final
             }
 
             return freq_map;
+        }
+
+        std::vector<std::pair<char, double>> convert_map_to_vector(const std::map<char, double>& mapToConvert)
+        {
+            std::vector<std::pair<char, double>> freq_vec;
+            std::copy(std::begin(FREQ_MAP), std::end(FREQ_MAP), 
+                    std::back_inserter<decltype(freq_vec)>(freq_vec));
+
+            std::sort(std::begin(freq_vec), std::end(freq_vec), [](auto& left, auto& right) {
+                    return left.second > right.second; });
+
+            return freq_vec; 
         }
 };
 

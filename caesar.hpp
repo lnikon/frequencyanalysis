@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <iterator>
 
 class CaesarChiper final
 {
@@ -21,6 +22,7 @@ class CaesarChiper final
             return;
         }
 
+        removeNonLetters(plaintext);
         makeStringUpper(plaintext);
 
         const std::size_t plaintextSize = plaintext.size();
@@ -47,6 +49,17 @@ class CaesarChiper final
             for(std::size_t i = 0; i < str.size(); i++)
             {
                 std::toupper(str[i]);
+            }
+        }
+
+        void removeNonLetters(std::string& str)
+        {
+            for(std::size_t i = 0; i < str.size(); i++)
+            {
+                if(!isalpha(str[i]))
+                {
+                    str.erase(std::begin(str) + i);
+                }
             }
         }
 };
