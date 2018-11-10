@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cctype>
 #include <utility>
+#include <tuple>
 
 class FrequencyAnalizer final
 {
@@ -32,31 +33,69 @@ class FrequencyAnalizer final
         void setChipertext(const std::string& chipertext) { m_chipertext = chipertext; }
 
         auto getPlaintext() { return m_plaintext; }
-        void setPlaintext(const std::string& plaintext) { m_plaintext = plaintext; }
+        void setPlaintext(const std::string& plaintext) 
+        {
+            m_plaintext = preprocessPlaintext(plaintext);
+        }
+
+        auto getAnalyzedtext() { return m_analyzedtext; }
+        void setAnalyzedtext(const std::string& analyzedtext) { m_analyzedtext = analyzedtext; }
 
         void frequencyAnalysis()
         {
             auto chipertextFreqMap = generate_freq_map();
             auto chipertextFreqVec = convert_map_to_vector(chipertextFreqMap);            
 
-            std::string plain;
-            plain.resize(m_chipertext.size());
+            std::string resultOfAnalysis;
+            resultOfAnalysis.resize(m_chipertext.size());
             
             auto it = std::begin(m_freq_vec);
             for(const auto& [letter, freq] : chipertextFreqVec)
             {
-                for(std::size_t i = 0; i < plain.size(); i++)
+                for(std::size_t i = 0; i < resultOfAnalysis.size(); i++)
                 {
                     if(m_chipertext[i] == letter)
                     {
-                        plain[i] = it->first;
+                        resultOfAnalysis[i] = it->first;
                     }
                 }
 
                 it++;
             }
 
-            m_plaintext = plain;
+            m_analyzedtext = resultOfAnalysis;
+        }
+
+        std::tuple<bool, std::size_t> compareResults()
+        {
+            if(m_analyzedtext.empty())
+            {
+                std::cerr << "Can't find results of frequency analysis\n";
+                return std::make_tuple(false, 0);
+            }
+
+            if(m_plaintext.empty())
+            {
+                std::cerr << "No plaintext specified\n";
+                return std::make_tuple(false, 0);
+            }
+
+            std::size_t diffNum = 0;
+            for(std::size_t i = 0; i < m_plaintext.size(); i++)
+            {
+                if(m_plaintext[i] != m_analyzedtext[i])
+                {
+                    diffNum++;
+                }
+            }
+            
+            bool isValid = true;
+            if(diffNum > 0)
+            {
+                isValid = false;
+            }
+
+            return std::make_tuple(isValid, diffNum);
         }
 
         void printFreqMap() const
@@ -84,10 +123,11 @@ class FrequencyAnalizer final
         std::vector<std::pair<char, double>> m_freq_vec;
         std::string m_chipertext;
         std::string m_plaintext;
+        std::string m_analyzedtext;
 
         std::map<char, double> generate_freq_map() const
         {
-            if(m_chipertext.size() <= 0)
+            if(m_chipertext.empty())
             {
                 std::cerr << "Empty chipertext specified\n";
                 return std::map<char, double>();
@@ -105,7 +145,7 @@ class FrequencyAnalizer final
                 }
             }
 
-            if(chipertextLen <= 0)
+            if(chipertextLen == 0)
             {
                 std::cerr << "Empty chipertext specified\n";
                 return decltype(freq_map)();
@@ -127,9 +167,32 @@ class FrequencyAnalizer final
 
             std::sort(std::begin(freq_vec), std::end(freq_vec), [](auto& left, auto& right) { return left.second > right.second; });
 
-            std::cout << "freq_vec.size(): " << freq_vec.size() << "\n";
-
             return freq_vec; 
+        }
+
+        std::string preprocessPlaintext(std::string dirtytext)
+        {
+            if(dirtytext.empty())
+            {
+                // This function is a internal part
+                // of our implementation, so it shouldn't 
+                // pass any info about preprocessiong to
+                // the outside
+                // Just return :)
+                return std::string("");
+            }
+
+            std::string plaintext;
+            for(std::size_t i = 0; i < dirtytext.size(); i++)
+            {
+                if(isalpha(dirtytext[i]))
+                {
+                    char ch = std::toupper(dirtytext[i]);
+                    plaintext.append(1, ch);
+                }
+            }
+
+            return plaintext;
         }
 };
 
